@@ -1,9 +1,10 @@
-name = "DistributedRelaxationTimes"
+name = "DRT"
 uuid = "77006267-fdeb-46de-a135-5da16dc5426c"
 authors = ["MaximeVH <maxime.vanhaeverbeke@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+BlackBoxOptim = "a134a8b2-14d6-55f6-9291-3336d3ab0209"
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
 DAQP = "c47d62df-3981-49c8-9651-128b1cd08617"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
