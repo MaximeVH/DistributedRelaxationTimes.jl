@@ -30,3 +30,28 @@ function compute_DRT(frequencies,impedances,λ)
     τ_out,γ_out = calculate_gamma(results.minimizer[2:end], τ, ϵ)
     return τ_out, γ_out
 end
+
+function compute_DRT_im(frequencies,impedances,λ)
+
+    N_freqs = length(frequencies)
+    τ = 1 ./ frequencies
+    
+    #Imaginary part of Z is used for the DRT calculation.
+    b_im = imag(impedances)
+    ϵ = calculate_shape_factor(frequencies) 
+
+    #Assemble matrices.
+    A_imag = construct_A_imag(frequencies,ϵ)
+    M = construct_M_1(frequencies,ϵ)
+    #Put the expression in quadratic form.
+    H_re, c_re = quad_format(A_imag, b_im, M, λ)
+
+    #Define objective function to be minimized.
+    objective_fnct(x) = 0.5*(transpose(x)*H_re*x) + (c_re*x)[1]
+
+    # Optimisation, also try other optimisation approaches.
+    results = optimize(objective_fnct, zeros(length(c_re)), ones(length(c_re))*1000, ones(length(c_re)))
+
+    τ_out,γ_out = calculate_gamma(results.minimizer, τ, ϵ)
+    return τ_out, γ_out
+end
