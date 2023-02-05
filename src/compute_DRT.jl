@@ -26,9 +26,9 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
 
     θ_hat = transpose(hcat(results.minimizer...))[2:length(frequencies)+1,:]
 
-    taumax = ceil(maximum(log10.(1 ./ freq_vec))) + 1  
-    taumin = floor(minimum(log10.(1 ./ (freq_vec)))) .-1
-    out_frequencies = [10.0^i for i in LinRange(-taumin, -taumax, 10*length(freq_vec))]
+    taumax = ceil(maximum(log10.(1 ./ frequencies))) + 1  
+    taumin = floor(minimum(log10.(1 ./ (frequencies)))) .-1
+    out_frequencies = [10.0^i for i in LinRange(-taumin, -taumax, 10*length(frequencies))]
 
     drt = drt_interpolation(out_frequencies, frequencies, θ_hat, ϵ , rbf_kernel)
 
