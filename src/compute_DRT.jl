@@ -1,57 +1,52 @@
-function compute_DRT(frequencies,impedances,λ)
+function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
+    rbf_kernel = SqExponentialKernel() , λ = 1e-2)
 
-    N_freqs = length(frequencies)
-    τ = 1 ./ frequencies
+    ϵ = calculate_shape_factor(frequencies,width_coeff,rbf_kernel)
+    println(ϵ)
+    Z_exp_imag = imag(measurements)
+    Z_exp_real = real(measurements)
+    Z_drt_imag = construct_Z_imag(frequencies, ϵ, rbf_kernel)
+    Z_drt_real = construct_Z_real(frequencies, ϵ, rbf_kernel)
+
+    if method == "re_im"
+        obj = x -> joint_objective(Z_drt_imag, -Z_exp_imag, Z_drt_real, Z_exp_real, x, λ)
+    elseif method == "im"
+        obj = x ->  objective(Z_drt_imag, -Z_exp_imag, x, λ)
+    elseif method == "re"
+        obj = x ->  objective(Z_drt_real, Z_exp_real, x, λ)
+    end
+
     
-    #Real part of Z is used for the DRT calculation.
-    b_re = real(impedances)
-    ϵ = calculate_shape_factor(frequencies) 
+    n = length(frequencies) + 2
+    θ = fill(0.0, n)
 
-    #Assemble matrices.
-    A_real_temp = construct_A_real(frequencies,ϵ)
-    M_temp = construct_M_1(frequencies,ϵ)
+    upper = 1e8 .*ones(n) 
+    lower = zeros(n)
+    results = optimize(obj, lower, upper, θ, Fminbox(BFGS()), autodiff=:forward)
 
-    #Add column for resistance
-    A_real = zeros(N_freqs,N_freqs+1)
-    A_real[:,2:end] = A_real_temp
-    A_real[:,1] .= 1
-    M = zeros(N_freqs+1,N_freqs+1)
-    M[2:end,2:end] = M_temp
+    θ_hat = transpose(hcat(results.minimizer...))[2:length(frequencies)+1,:]
 
-    #Put the expression in quadratic form.
-    H_re, c_re = quad_format(A_real, b_re, M, λ)
+    taumax = ceil(maximum(log10.(1 ./ freq_vec))) + 1  
+    taumin = floor(minimum(log10.(1 ./ (freq_vec)))) .-1
+    out_frequencies = [10.0^i for i in LinRange(-taumin, -taumax, 10*length(freq_vec))]
 
-    #Define objective function to be minimized.
-    objective_fnct(x) = 0.5*(transpose(x)*H_re*x) + (c_re*x)[1]
-    
-    # Optimisation, also try other optimisation approaches.
-    results = optimize(objective_fnct, zeros(length(c_re)), ones(length(c_re))*1000, ones(length(c_re)))
+    drt = drt_interpolation(out_frequencies, frequencies, θ_hat, ϵ , rbf_kernel)
 
-    τ_out,γ_out = calculate_gamma(results.minimizer[2:end], τ, ϵ)
-    return τ_out, γ_out
+    pkindices = findpeaks1d(drt)[1]
+
+    taus_out = 1 ./ out_frequencies
+
+    relaxation_times = taus_out[pkindices]
+
+    return relaxation_times, taus_out, drt
 end
 
-function compute_DRT_im(frequencies,impedances,λ)
 
-    N_freqs = length(frequencies)
-    τ = 1 ./ frequencies
-    
-    #Imaginary part of Z is used for the DRT calculation.
-    b_im = imag(impedances)
-    ϵ = calculate_shape_factor(frequencies) 
-
-    #Assemble matrices.
-    A_imag = construct_A_imag(frequencies,ϵ)
-    M = construct_M_1(frequencies,ϵ)
-    #Put the expression in quadratic form.
-    H_re, c_re = quad_format(A_imag, b_im, M, λ)
-
-    #Define objective function to be minimized.
-    objective_fnct(x) = 0.5*(transpose(x)*H_re*x) + (c_re*x)[1]
-
-    # Optimisation, also try other optimisation approaches.
-    results = optimize(objective_fnct, zeros(length(c_re)), ones(length(c_re))*1000, ones(length(c_re)))
-
-    τ_out,γ_out = calculate_gamma(results.minimizer, τ, ϵ)
-    return τ_out, γ_out
+function drt_interpolation(out_frequencies,frequencies, θ, ϵ, rbf_kernel)
+    out_drt = Array{Float64}(undef,length(out_frequencies))
+    x0 = -log.(frequencies); x = -log.(out_frequencies)
+    for k in eachindex(out_frequencies)
+        out_drt[k] = (transpose(θ) * rbf_kernel.(ϵ.*x[k],ϵ .*x0))[1]
+    end
+    return out_drt
 end
