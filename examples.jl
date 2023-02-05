@@ -7,8 +7,12 @@ measurements = Z_data[:,1] .+ (Z_data[:,2] .* im)
 # Nyquist plot so see what the original data looks like.
 Plots.plot(real(measurements),-imag(measurements))
 
+# Find the optimal lambda parameter using Saccoccio et al.'s Re-Imcross-validation test functions, this may take several minutes.
+
+@time λ_opt =  find_optimal_lambda(frequencies, measurements) #result: 0.0001
+
 # DRT calculation.
-@time relaxation_times, taus_out, drt = compute_DRT(frequencies, measurements)
+relaxation_times, taus_out, drt = compute_DRT(frequencies, measurements,λ=λ_opt)
 
 # Visualisation
 plot_DRT(taus_out,drt)
