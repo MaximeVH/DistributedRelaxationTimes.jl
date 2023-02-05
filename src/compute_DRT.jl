@@ -2,7 +2,7 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
     rbf_kernel = SqExponentialKernel() , λ = 1e-2)
 
     ϵ = calculate_shape_factor(frequencies,width_coeff,rbf_kernel)
-    println(ϵ)
+
     Z_exp_imag = imag(measurements)
     Z_exp_real = real(measurements)
     Z_drt_imag = construct_Z_imag(frequencies, ϵ, rbf_kernel)
@@ -18,7 +18,7 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
 
     
     n = length(frequencies) + 2
-    θ = fill(0.0, n)
+    θ = fill(0.05, n)
 
     upper = 1e8 .*ones(n) 
     lower = zeros(n)
@@ -32,7 +32,7 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
 
     drt = drt_interpolation(out_frequencies, frequencies, θ_hat, ϵ , rbf_kernel)
 
-    pkindices = findpeaks1d(drt)[1]
+    pkindices = get_peak_inds(drt)
 
     taus_out = 1 ./ out_frequencies
 
@@ -49,4 +49,13 @@ function drt_interpolation(out_frequencies,frequencies, θ, ϵ, rbf_kernel)
         out_drt[k] = (transpose(θ) * rbf_kernel.(ϵ.*x[k],ϵ .*x0))[1]
     end
     return out_drt
+end
+
+function get_peak_inds(drt)
+    pkindices = findpeaks1d(drt)[1]
+    amplitudes = drt[pkindices]
+    max_amplitude = maximum(amplitudes)
+    to_remove = amplitudes .<= 0.01*max_amplitude
+    deleteat!(pkindices, to_remove)
+    return pkindices
 end
