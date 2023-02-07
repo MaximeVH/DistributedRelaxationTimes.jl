@@ -1,5 +1,5 @@
 function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
-    rbf_kernel = SqExponentialKernel() , λ = 1e-2)
+    rbf_kernel = SqExponentialKernel() , λ = 1e-2, peak_strictness = 0.01)
 
     ϵ = calculate_shape_factor(frequencies,width_coeff,rbf_kernel)
 
@@ -32,13 +32,14 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
 
     drt = drt_interpolation(out_frequencies, frequencies, θ_hat, ϵ , rbf_kernel)
 
-    pkindices = get_peak_inds(drt)
+    pkindices = get_peak_inds(drt,peak_strictness)
 
     taus_out = 1 ./ out_frequencies
 
     relaxation_times = taus_out[pkindices]
+    peak_amplitudes = drt[pkindices]
 
-    return relaxation_times, taus_out, drt
+    return relaxation_times, peak_amplitudes, taus_out, drt
 end
 
 
@@ -51,11 +52,11 @@ function drt_interpolation(out_frequencies,frequencies, θ, ϵ, rbf_kernel)
     return out_drt
 end
 
-function get_peak_inds(drt)
+function get_peak_inds(drt,strictness)
     pkindices = findpeaks1d(drt)[1]
     amplitudes = drt[pkindices]
     max_amplitude = maximum(amplitudes)
-    to_remove = amplitudes .<= 0.01*max_amplitude
+    to_remove = amplitudes .<= strictness*max_amplitude
     deleteat!(pkindices, to_remove)
     return pkindices
 end
