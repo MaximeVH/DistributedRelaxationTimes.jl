@@ -11,5 +11,6 @@ module DRT
     include("hyperparameter_tuning.jl")
     include("calculate_shape_factor.jl")
     include("compute_DRT.jl") 
+    include("visualisations.jl")
 
 end
