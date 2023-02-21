@@ -15,7 +15,7 @@ There are also a number of keyword arguments to fine-tune the calculation.
  """
 function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
     rbf_kernel = SqExponentialKernel() , λ = 1e-2, peak_strictness = 0.01)
-
+    
     ϵ = calculate_shape_factor(frequencies,width_coeff,rbf_kernel)
 
     # Get the real and imaginary parts of the impedance measurements.
@@ -35,23 +35,24 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
         obj = x ->  objective(Z_drt_real, Z_exp_real, x, λ)
     end
 
-    # Initialize the weight vector θ, with values offset slightly from zero.
-    n = length(frequencies) + 2
+    # Initialize the weight vector θ, with values offset slightly from zero (boundary).
+    n = length(frequencies) +1
     θ = fill(0.05, n)
 
-    # Optimize the weights θ with the restriction θ >= 0.
-    upper = 1e8 .*ones(n) 
+    # Optimize the weights θ with the restriction θ >= 0 (no negative peaks).
+    upper = 1e8 .*ones(n) # Arbitrarily large upper bound.
     lower = zeros(n)
     results = optimize(obj, lower, upper, θ, Fminbox(BFGS()), autodiff=:forward)
 
-    θ_hat = transpose(hcat(results.minimizer...))[2:length(frequencies)+1,:]
+    # The first value corresponds to R_inf (unless "im" is used), while the rest are the DRT weights.
+    θ_hat = results.minimizer[2:end]
 
     # Get the frequencies over which the DRT is calculated (higher resolution than input frequencies through interpolation).
     taumax = ceil(maximum(log10.(1 ./ frequencies))) + 1  
     taumin = floor(minimum(log10.(1 ./ (frequencies)))) .-1
     out_frequencies = [10.0^i for i in LinRange(-taumin, -taumax, 10*length(frequencies))]
 
-    # Calculate the DRT over these frequencies, using the weight vector θ.
+    # Calculate the DRT over these frequencies, using the estimated weight vector θ_hat.
     drt = drt_interpolation(out_frequencies, frequencies, θ_hat, ϵ , rbf_kernel)
 
     # Find the indices of the peaks in the DRT profile, with removal of possible artifacts.
