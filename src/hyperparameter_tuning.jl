@@ -14,29 +14,42 @@ function find_optimal_lambda(frequencies, measurements; method="re_im_cv", width
     ϵ = calculate_shape_factor(frequencies,width_coeff,rbf_kernel)
     Z_exp_real = real(measurements)
     Z_exp_imag = imag(measurements)
+
+    #Select a range of λ values to evaluate.
     lambda_values = [10.0^i for i in  range(-6, stop = 1, step=1)]
+
+    #initialize Vector of hyperparameter objective values.
     hyperparam_objective_values = Array{Float64}(undef,length(lambda_values))
+
     Z_drt_imag = construct_Z_imag(frequencies, ϵ, rbf_kernel)
     Z_drt_real = construct_Z_real(frequencies, ϵ, rbf_kernel)
-    n = length(frequencies) + 2
+
+    #initialize thetas.
+    n = length(frequencies) + 1
     θ = fill(0.05, n)
     upper = 1e8 .*ones(n) 
     lower = zeros(n)
 
     for i in eachindex(lambda_values)
         λ = lambda_values[i]
+        # Get the estimated θ vectors using the real and imaginary parts of the impedance.
         results_imag = optimize(x -> objective(Z_drt_imag, -Z_exp_imag, x, λ), lower, upper, θ,
         Fminbox(BFGS()),autodiff=:forward);
         results_real = optimize(x -> objective(Z_drt_real, Z_exp_real, x, λ), lower, upper, θ,
         Fminbox(BFGS()),autodiff=:forward);
-        x_primeprime = results_imag.minimizer
-        x_prime = results_real.minimizer
-        re_im_cv_prime = loss(Z_drt_real, Z_exp_real, x_primeprime)
-        re_im_cv_primeprime = loss(Z_drt_imag, -Z_exp_imag, x_prime)
+        # Select the relevant parts.
+        θ_imag = results_imag.minimizer[2:end]
+        θ_real = results_real.minimizer[2:end]
+
+        #reconstructed impedances where real part is calculated with thetas from imaginary part, and vice versa.
+        re_im_cv_Re = norm(Z_drt_real*θ_imag - Z_exp_real)^2
+        re_im_cv_Im = norm(Z_drt_imag*θ_real + Z_exp_imag)^2
+
+        #The differences between θ_imag and θ_real, as well as their reconstructed Z's should be minimized.
         if method == "re_im_cv"
-            hyperparam_objective_values[i] = re_im_cv_prime + re_im_cv_primeprime
+            hyperparam_objective_values[i] = re_im_cv_Re + re_im_cv_Im
         elseif method == "discrepancy"
-            hyperparam_objective_values[i] = norm(x_primeprime - x_prime)^2
+            hyperparam_objective_values[i] = norm(θ_imag - θ_real)^2
         end
     end
 
