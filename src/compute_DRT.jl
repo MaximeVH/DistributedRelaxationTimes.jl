@@ -18,11 +18,15 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
 
     ϵ = calculate_shape_factor(frequencies,width_coeff,rbf_kernel)
 
+    # Get the real and imaginary parts of the impedance measurements.
     Z_exp_imag = imag(measurements)
     Z_exp_real = real(measurements)
+
+    # Calculate the matrices for the reconstruction of the real and imaginary parts of the impedance spectra.
     Z_drt_imag = construct_Z_imag(frequencies, ϵ, rbf_kernel)
     Z_drt_real = construct_Z_real(frequencies, ϵ, rbf_kernel)
 
+    # Select the appropriate objective function for DRT calculation using the real part of the measurements, the imaginary part or both.
     if method == "re_im"
         obj = x -> joint_objective(Z_drt_imag, -Z_exp_imag, Z_drt_real, Z_exp_real, x, λ)
     elseif method == "im"
@@ -31,22 +35,26 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
         obj = x ->  objective(Z_drt_real, Z_exp_real, x, λ)
     end
 
-    
+    # Initialize the weight vector θ, with values offset slightly from zero.
     n = length(frequencies) + 2
     θ = fill(0.05, n)
 
+    # Optimize the weights θ with the restriction θ >= 0.
     upper = 1e8 .*ones(n) 
     lower = zeros(n)
     results = optimize(obj, lower, upper, θ, Fminbox(BFGS()), autodiff=:forward)
 
     θ_hat = transpose(hcat(results.minimizer...))[2:length(frequencies)+1,:]
 
+    # Get the frequencies over which the DRT is calculated (higher resolution than input frequencies through interpolation).
     taumax = ceil(maximum(log10.(1 ./ frequencies))) + 1  
     taumin = floor(minimum(log10.(1 ./ (frequencies)))) .-1
     out_frequencies = [10.0^i for i in LinRange(-taumin, -taumax, 10*length(frequencies))]
 
+    # Calculate the DRT over these frequencies, using the weight vector θ.
     drt = drt_interpolation(out_frequencies, frequencies, θ_hat, ϵ , rbf_kernel)
 
+    # Find the indices of the peaks in the DRT profile, with removal of possible artifacts.
     pkindices = get_peak_inds(drt,peak_strictness)
 
     taus_out = 1 ./ out_frequencies
