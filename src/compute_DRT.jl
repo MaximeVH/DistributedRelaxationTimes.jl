@@ -1,3 +1,18 @@
+"""
+compute_DRT(frequencies::Array{Float64,1}, measurements::Array{Complex{Float64},1}; <keyword arguments>)
+
+Calculate the Distribution of Relaxation Times using RBF discretization and Tikhonov regularisation.
+
+The essential inputs are a set of frequencies and the impedance measurements conducted at those frequencies.
+There are also a number of keyword arguments to fine-tune the calculation. 
+
+# Keyword arguments
+- `method::String="im"`: the part of the measurements used to calculate the DRT.
+- `rbf_kernel = SqExponentialKernel()`: The RBF used to discretize the DRT.
+- `width_coeff::Float64=0.10`: the hyperparameter influencing the shape factor of the RBF.
+- `λ::Float64=1e-2`: a hyperparameter tuning the degree of regularisation.
+- `peak_strictness::Float64=0.01`: A measure to avoid artifacts in the DRT by removing peaks with amplitude less than a given percentage of the highest peak.
+ """
 function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
     rbf_kernel = SqExponentialKernel() , λ = 1e-2, peak_strictness = 0.01)
 
@@ -42,7 +57,12 @@ function compute_DRT(frequencies, measurements; method="im", width_coeff = 0.10,
     return relaxation_times, peak_amplitudes, taus_out, drt
 end
 
+"""
+drt_interpolation(out_frequencies,frequencies, θ, ϵ, rbf_kernel)
 
+calculates the DRT (defined on the whole real line), using the weights θ the RBF information, and the frequencies.
+
+"""
 function drt_interpolation(out_frequencies,frequencies, θ, ϵ, rbf_kernel)
     out_drt = Array{Float64}(undef,length(out_frequencies))
     x0 = -log.(frequencies); x = -log.(out_frequencies)
@@ -52,6 +72,12 @@ function drt_interpolation(out_frequencies,frequencies, θ, ϵ, rbf_kernel)
     return out_drt
 end
 
+"""
+get_peak_inds(drt,strictness)
+
+Find the peaks in the DRT. Possible artifacts are eliminated depending on the value of the strictness argument.
+
+"""
 function get_peak_inds(drt,strictness)
     pkindices = findpeaks1d(drt)[1]
     amplitudes = drt[pkindices]
