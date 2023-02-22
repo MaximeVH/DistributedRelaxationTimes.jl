@@ -1,4 +1,4 @@
-# DRT
+# DRT.jl
 
 A Julia package to calculate the **Distribution of Relaxation Times (DRT)** of a given set of electrochemical impedance spectroscopy measurements and frequency values. The current implementation uses the Tikhonov regularisation approach with radial basis function discretization. 
 
