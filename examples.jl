@@ -9,7 +9,7 @@ Plots.plot(real(measurements),-imag(measurements))
 
 # Find the optimal lambda parameter using Saccoccio et al.'s Re-Imcross-validation test functions, this may take several minutes.
 
-@time λ_opt =  find_optimal_lambda(freqs, measurements) #result: 0.0001
+@time λ_opt =  find_optimal_lambda(freqs, measurements)
 
 # DRT calculation.
 relaxation_times, peak_amplitudes, taus_out, drt = compute_DRT(freqs, measurements, λ = λ_opt)
