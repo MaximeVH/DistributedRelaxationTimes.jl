@@ -56,7 +56,7 @@ function compute_DRT(frequencies, measurements;
     # taumin = floor(f->min(log10(1 / f),frequencies)) - 1 
     taumax = ceil(maximum(log10.(1 ./ frequencies))) + 1  
     taumin = floor(minimum(log10.(1 ./ (frequencies)))) .-1
-    out_frequencies = [10.0^i for i in range(-taumin, -taumax, 10length(frequencies))]
+    out_frequencies = [10.0^i for i in range(-taumin, -taumax, length = 10length(frequencies))]
 
     # Calculate the DRT over these frequencies, using the estimated weight vector θ_hat.
     drt = drt_interpolation(out_frequencies, frequencies, θ_hat, ϵ, rbf_kernel)
