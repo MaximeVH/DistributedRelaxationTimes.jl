@@ -15,7 +15,7 @@ ToeplitzMatrices = "c751599d-da0a-543b-9d20-d0a503d91d24"
 [compat]
 FindPeaks1D = "0.1.8"
 KernelFunctions = "0.10"
-Plots = "1.38"
+Plots = "1.20.0-1.38.6" 
 QuadGK = "2.7"
 Roots = "2.0.7"
 ToeplitzMatrices = "0.7"
