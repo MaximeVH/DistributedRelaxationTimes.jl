@@ -45,8 +45,8 @@ function find_optimal_lambda(frequencies, measurements;
         results_real = optimize(x -> objective(Z_drt_real, Z_exp_real, x, λ), lower, upper, θ,
                                 Fminbox(BFGS()),autodiff=:forward);
         # Select the relevant parts.
-        θ_imag = @view results_imag.minimizer[2:end]
-        θ_real = @view results_real.minimizer[2:end]
+        θ_imag = results_imag.minimizer
+        θ_real = results_real.minimizer
 
         #reconstructed impedances where real part is calculated with thetas from imaginary part, and vice versa.
         re_im_cv_Re = norm(Z_drt_real*θ_imag - Z_exp_real)^2
