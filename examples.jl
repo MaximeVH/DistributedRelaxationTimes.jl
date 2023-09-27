@@ -14,6 +14,6 @@ Plots.plot(real(measurements),-imag(measurements), label="Nyquist")
 # DRT calculation.
 relaxation_times, peak_amplitudes, taus_out, drt = compute_DRT(freqs, measurements, λ = λ_opt)
 
-# Visualisation
+# Visualisation.
 plot_DRT(relaxation_times, peak_amplitudes, taus_out, drt)
 
