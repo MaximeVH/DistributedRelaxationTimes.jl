@@ -1,4 +1,4 @@
-module DRT
+module DistributedRelaxationTimes
 
     export compute_DRT, find_optimal_lambda, plot_DRT
 
