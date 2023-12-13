@@ -1,3 +1,5 @@
+mean(v::Vector) = sum(v)/length(v)
+
 """
     calculate_shape_factor(frequencies,coefficient, rbf_kernel)
 
