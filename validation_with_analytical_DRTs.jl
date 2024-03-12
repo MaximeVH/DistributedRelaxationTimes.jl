@@ -35,6 +35,7 @@ tau_relax_test  , amps_test  , taus_test  , drt_test  = compute_DRT(frequencies_
 plot!(taus_test  , drt_test,xaxis = :log, label = "Zarc numerical DRT")
 xlabel!("τ (s)")
 ylabel!("γ (Ω)")
+xlims!(10^-6,10^2)
 
 # II) Double Zarc model
 
@@ -64,7 +65,28 @@ taus = 1 ./ frequencies_test
 scatter(taus,analyrical_DRT_test,xaxis=:log, label="analytical DRT") # With two clear peaks, the relaxation processes are well resolved here.
 
 # Calculate the DRT from the impedance measurements and compare with the analytical solution.
-tau_relax_test_double  , amps_test_double  , taus_test_double  , drt_test_double  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im")
-plot!(taus_test_double , drt_test_double, xaxis = :log, label="numerical DRT")
-xlabel!("τ (s)")
+tau_relax_test_double  , amps_test_double  , taus_test_double  , drt_test_double  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im",rbf_kernel=SqExponentialKernel())
+tau_relax_test_double1  , amps_test_double1  , taus_test_double1  , drt_test_double1  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im",rbf_kernel=MaternKernel())
+tau_relax_test_double2  , amps_test_double2  , taus_test_double2  , drt_test_double2  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im",rbf_kernel=GammaExponentialKernel())
+tau_relax_test_double3  , amps_test_double3  , taus_test_double3  , drt_test_double3  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im",rbf_kernel=Matern12Kernel())
+tau_relax_test_double4  , amps_test_double4  , taus_test_double4  , drt_test_double4  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im",rbf_kernel=RationalKernel())
+tau_relax_test_double5  , amps_test_double5  , taus_test_double5  , drt_test_double5  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im",rbf_kernel=Matern52Kernel())
+tau_relax_test_double5  , amps_test_double5  , taus_test_double5  , drt_test_double5  = compute_DRT(frequencies_test,measurements_test2,λ =  10^-6, width_coeff = 0.1 ,method= "re_im",rbf_kernel=RationalQuadraticKernel())
+plot!(taus_test_double , drt_test_double, xaxis = :log, label="Gaussian kernel")
+plot!(taus_test_double , drt_test_double, xaxis = :log, label="Matern kernel",linetype=:dash)
 ylabel!("γ (Ω)")
+xlims!(10^-6,10^2)
+# savefig(raw"double_zarc_drt_validation.svg")
+
+scatter(taus_test_double , drt_test_double, xaxis = :log, label="Gaussian kernel")
+scatter!(taus_test_double1 , drt_test_double1, xaxis = :log, label="Matern kernel",markershape=:diamond)
+scatter!(taus_test_double2 , drt_test_double2, xaxis = :log, label="GammaExponentialKernel",markershape=:square)
+
+
+plot(taus_test_double , drt_test_double, xaxis = :log, label="Gaussian kernel")
+plot!(taus_test_double1 , drt_test_double1, xaxis = :log, label="Matern kernel")
+plot!(taus_test_double2 , drt_test_double2, xaxis = :log, label="GammaExponentialKernel")
+plot!(taus_test_double3 , drt_test_double3, xaxis = :log, label="3")
+plot!(taus_test_double4 , drt_test_double4, xaxis = :log, label="4")
+plot!(taus_test_double5 , drt_test_double5, xaxis = :log, label="5")
+xlims!(10^-5,10^0)

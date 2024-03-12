@@ -36,3 +36,14 @@ function plot_DRT!(τs,γs;lab="DRT",color = :auto,style = :solid)
     fig = Plots.plot!(τs,γs,xaxis=:log,label = lab,ylabel = "γ (Ω)",xlabel = "τ (s)",linecolor=color,linestyle= style)
     return fig
 end
+
+function nyquist(impedance,lab="Nyquist")
+    fig =  Plots.scatter(real(impedance),-imag(impedance),markerstrokewidth = 0,label = lab)
+    xlabel!("Real(Z) (Ω)")
+    ylabel!("-Imag(Z) (Ω)") 
+    return fig
+end
+function nyquist!(impedance,lab="Nyquist")
+    fig =  Plots.scatter!(real(impedance),-imag(impedance),markerstrokewidth = 0,label = lab)
+    return fig
+end
